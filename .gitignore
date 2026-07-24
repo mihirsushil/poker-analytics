@@ -10,3 +10,6 @@ venv/
 
 # Bulk bootstrap volume data is fetched on demand, not committed
 data/samples/phh/bulk/
+
+# Per-install salt for hashing opponent names - must never be committed
+data/.hash_salt
