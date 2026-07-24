@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# Bulk bootstrap volume data is fetched on demand, not committed
+data/samples/phh/bulk/
