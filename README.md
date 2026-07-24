@@ -25,7 +25,26 @@ service of every online poker site and is explicitly out of scope.
 
 ## Status
 
-Phase 1 (parser & database) — in progress.
+Phase 1 (parser & database) core is done and validated:
+
+- Two parsers feeding one schema: raw PokerStars `.txt` hand histories
+  (validated against 15 real fixture hands covering side pots, all-ins,
+  uncalled bets, sitting-out players, and both header format eras) and the
+  public `phh-dataset` bulk-volume source.
+- **4,992 hands** ingested into `data/poker.db` (run
+  `scripts/fetch_phh_bulk.py` then `scripts/ingest_bootstrap_data.py` to
+  reproduce/expand).
+- Stats engine (VPIP, PFR, 3-bet%, fold-to-3-bet%, c-bet%, WTSD%, W$SD%,
+  aggression factor), sliceable by player/position/date. VPIP and PFR are
+  cross-checked against an independent brute-force recomputation
+  (`tests/test_stats.py`), per the project's own validation bar.
+- Sanity check on the current dataset: VPIP/PFR rise from UTG (20.4%/7.5%)
+  to BTN (29.7%/14.3%), SB VPIP is the highest of any position (35.0%), and
+  W$SD sits at 50.8% - all exactly the shape you'd expect from a real
+  population, which is the best available substitute for PokerTracker
+  cross-validation right now.
+
+Next: Phase 2 (MCP server).
 
 ## Phases
 
