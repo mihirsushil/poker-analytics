@@ -6,6 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "poker-analytics"
 version = "0.1.0"
 requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.2.0",
+]
+
+[project.scripts]
+poker-analytics-mcp = "poker_analytics.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

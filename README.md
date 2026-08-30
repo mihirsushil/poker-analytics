@@ -25,7 +25,7 @@ service of every online poker site and is explicitly out of scope.
 
 ## Status
 
-Phase 1 (parser & database) core is done and validated:
+Phase 2 (MCP server) is done. Phase 1 (parser & database) core is done and validated:
 
 - Two parsers feeding one schema: raw PokerStars `.txt` hand histories
   (validated against 15 real fixture hands covering side pots, all-ins,
@@ -44,7 +44,27 @@ Phase 1 (parser & database) core is done and validated:
   population, which is the best available substitute for PokerTracker
   cross-validation right now.
 
-Next: Phase 2 (MCP server).
+Phase 2 (MCP server) exposes six tools over the database in
+`src/poker_analytics/mcp_server.py`: `query_hands`, `get_hand`,
+`compute_stats`, `compare_positions`, `find_leaks`, `session_summary`.
+
+- `find_leaks` flags a player's stats that deviate from the population
+  baseline by more than a per-stat threshold (documented in
+  `stats._LEAK_THRESHOLDS`), gated by a minimum sample size so a handful of
+  hands can't trigger a false positive.
+- `session_summary` buckets a player's hands into sessions using a
+  gap-based rule (default 30 minutes, configurable), the same approach HUD
+  tools like PT4/HM3 use - multi-tabling counts as one session, not one
+  per table. Note: the bootstrap PHH bulk data only carries date-level
+  timestamps upstream (no time-of-day), so session detection on it
+  degenerates to one bucket per day; it's fully meaningful on the raw-text
+  fixtures and will be on self-played data, which carry real timestamps.
+
+Run it: `python -m poker_analytics.mcp_server` (or the `poker-analytics-mcp`
+console script after `pip install -e .`), registered with an MCP client
+over stdio.
+
+Next: Phase 3 (eval harness).
 
 ## Phases
 

@@ -252,3 +252,62 @@ def full_report(conn: sqlite3.Connection, player_hash: str | None = None, positi
 def by_position(conn: sqlite3.Connection, player_hash: str | None = None, start_date: str | None = None, end_date: str | None = None) -> dict[str, dict]:
     positions = [r[0] for r in conn.execute("SELECT DISTINCT position FROM hand_seats WHERE position IS NOT NULL").fetchall()]
     return {pos: full_report(conn, player_hash, pos, start_date, end_date) for pos in positions}
+
+
+# (stat key, sample-size key, minimum sample size, flag threshold) - minimums
+# guard against flagging noise off a handful of hands; thresholds are a
+# first-cut "how far off population is worth a human looking at", not a
+# claim of statistical significance. Both are easy to retune once there's
+# self-played volume to calibrate against.
+_LEAK_THRESHOLDS = [
+    ("vpip_pct", "hands", 30, 8.0),
+    ("pfr_pct", "hands", 30, 6.0),
+    ("three_bet_pct", "three_bet_opportunities", 10, 4.0),
+    ("fold_to_3bet_pct", "faced_3bet_after_opening", 10, 10.0),
+    ("cbet_pct", "opportunities", 10, 10.0),
+    ("wtsd_pct", "saw_flop", 20, 8.0),
+    ("wsd_pct", "showdowns", 10, 8.0),
+    ("aggression_factor", "calls", 10, 0.7),
+]
+
+
+def find_leaks(conn: sqlite3.Connection, player_hash: str, position: str | None = None, start_date: str | None = None, end_date: str | None = None) -> dict:
+    """Flag stats where `player_hash` deviates from the population baseline
+    by more than that stat's threshold, above the minimum sample size
+    needed to trust the number.
+
+    Baseline is the plain population report (`player_hash=None`) over the
+    same filters - it isn't stripped of the player's own hands, since
+    against a population of thousands of bootstrap hands one player's
+    contribution to the baseline is noise; not worth the extra query
+    complexity to exclude.
+    """
+    player_report = full_report(conn, player_hash, position, start_date, end_date)
+    baseline_report = full_report(conn, None, position, start_date, end_date)
+
+    leaks = []
+    for stat_key, sample_key, min_sample, threshold in _LEAK_THRESHOLDS:
+        player_val = player_report.get(stat_key)
+        baseline_val = baseline_report.get(stat_key)
+        sample_size = player_report.get(sample_key) or 0
+        if player_val is None or baseline_val is None or sample_size < min_sample:
+            continue
+        diff = round(player_val - baseline_val, 2)
+        if abs(diff) >= threshold:
+            leaks.append({
+                "stat": stat_key,
+                "player_value": player_val,
+                "population_value": baseline_val,
+                "diff": diff,
+                "direction": "high" if diff > 0 else "low",
+                "sample_size": sample_size,
+            })
+
+    leaks.sort(key=lambda l: abs(l["diff"]), reverse=True)
+    return {
+        "player_hash": player_hash,
+        "filters": {"position": position, "start_date": start_date, "end_date": end_date},
+        "player": player_report,
+        "population_baseline": baseline_report,
+        "leaks": leaks,
+    }

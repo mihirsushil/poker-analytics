@@ -1,7 +1,9 @@
 # Phase 1 (parser, database, stats engine) - stdlib only, plus:
 pytest>=8.0
 
+# Phase 2 (MCP server):
+mcp>=1.2.0
+
 # Later phases will add their own requirements files as they're built:
-# Phase 2: mcp
 # Phase 3: pyyaml
 # Phase 4: torch, transformers, peft, trl, fastapi, uvicorn
