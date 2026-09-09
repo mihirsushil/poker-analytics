@@ -1,0 +1,68 @@
+# Scenarios for the `query_hands` tool. See ../README.md for the schema.
+
+- id: query_hands_position_btn
+  category: single_tool
+  prompt: "Show me every hand where I was on the button."
+  expected_tool: query_hands
+  expected_args:
+    position: BTN
+  notes: Straightforward filter-by-position request.
+
+- id: query_hands_limit
+  category: single_tool
+  prompt: "List my last 10 hands."
+  expected_tool: query_hands
+  expected_args:
+    limit: 10
+  notes: Tests mapping "last N" to the limit argument.
+
+- id: query_hands_site_and_dates
+  category: argument_inference
+  prompt: "Pull up all hands I played at PokerStars in March 2026."
+  expected_tool: query_hands
+  expected_args:
+    site: PokerStars
+    start_date: "2026-03-01"
+    end_date: "2026-03-31"
+  notes: Tests resolving a named month into a start/end date range plus a site filter.
+
+- id: query_hands_position_sb
+  category: single_tool
+  prompt: "What hands did I play from the small blind?"
+  expected_tool: query_hands
+  expected_args:
+    position: SB
+
+- id: query_hands_position_and_dates
+  category: argument_inference
+  prompt: "Show me hands from the big blind between January 1 and January 31, 2026."
+  expected_tool: query_hands
+  expected_args:
+    position: BB
+    start_date: "2026-01-01"
+    end_date: "2026-01-31"
+
+- id: query_hands_pagination
+  category: argument_inference
+  prompt: "Give me the next page of hands after the first 50."
+  expected_tool: query_hands
+  expected_args:
+    offset: 50
+  notes: Tests pagination language mapping to offset rather than limit.
+
+- id: query_hands_position_utg
+  category: single_tool
+  prompt: "Pull every UTG hand I've played."
+  expected_tool: query_hands
+  expected_args:
+    position: UTG
+
+- id: query_hands_vague_recent
+  category: ambiguous
+  prompt: "Show me my recent hands."
+  expected_tool: query_hands
+  expected_args: {}
+  notes: >
+    "Recent" has no fixed definition; this only checks that the model still routes to
+    query_hands rather than compute_stats or session_summary, not that it picks a specific
+    date range or limit.

@@ -1,0 +1,51 @@
+# Scenarios for the `get_hand` tool. See ../README.md for the schema.
+#
+# get_hand takes the internal `id` returned by query_hands, not a poker-room hand number.
+# Scenarios that give a bare number ("hand 482") assume the user is quoting an id they saw
+# in a prior query_hands result (e.g. from a UI table) — a real limitation of this eval,
+# noted rather than glossed over.
+
+- id: get_hand_by_id_basic
+  category: single_tool
+  prompt: "Show me the full detail for hand 482."
+  expected_tool: get_hand
+  expected_args:
+    id: 482
+
+- id: get_hand_by_id_actions
+  category: single_tool
+  prompt: "What happened in hand 17 — who was at the table and what did they do?"
+  expected_tool: get_hand
+  expected_args:
+    id: 17
+
+- id: get_hand_by_id_full
+  category: single_tool
+  prompt: "Give me every action and pot in hand 9001."
+  expected_tool: get_hand
+  expected_args:
+    id: 9001
+
+- id: get_hand_by_id_history
+  category: single_tool
+  prompt: "I want to see the complete history of hand 3."
+  expected_tool: get_hand
+  expected_args:
+    id: 3
+
+- id: get_hand_no_id_trap
+  category: ambiguous
+  prompt: "Pull up that big pot hand from earlier."
+  expected_tool: query_hands
+  expected_args: {}
+  notes: >
+    Trap scenario: get_hand requires a specific internal id that isn't known here. The
+    correct first call is query_hands to locate candidate hands, not get_hand with a
+    guessed id.
+
+- id: get_hand_by_number
+  category: argument_inference
+  prompt: "Open hand number 1204 for me."
+  expected_tool: get_hand
+  expected_args:
+    id: 1204

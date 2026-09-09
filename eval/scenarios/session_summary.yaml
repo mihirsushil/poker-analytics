@@ -1,0 +1,39 @@
+# Scenarios for the `session_summary` tool. See ../README.md for the schema.
+
+- id: session_summary_basic
+  category: single_tool
+  prompt: "Break my play into sessions and show me how each one went."
+  expected_tool: session_summary
+  expected_args: {}
+
+- id: session_summary_last
+  category: single_tool
+  prompt: "How long was my last session and what did I win or lose?"
+  expected_tool: session_summary
+  expected_args: {}
+
+- id: session_summary_custom_gap
+  category: argument_inference
+  prompt: "Summarize my sessions with a 45-minute gap cutoff instead of the default."
+  expected_tool: session_summary
+  expected_args:
+    gap_minutes: 45
+
+- id: session_summary_multitabling
+  category: single_tool
+  prompt: "What tables did I multi-table in my longest session?"
+  expected_tool: session_summary
+  expected_args: {}
+
+- id: session_summary_vague
+  category: ambiguous
+  prompt: "How did that one session go where I played forever?"
+  expected_tool: session_summary
+  expected_args: {}
+
+- id: session_summary_gap_minutes_15
+  category: argument_inference
+  prompt: "Use a 15 minute break as the cutoff between sessions."
+  expected_tool: session_summary
+  expected_args:
+    gap_minutes: 15

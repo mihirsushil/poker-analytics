@@ -1,0 +1,65 @@
+# Scenarios for the `compute_stats` tool. See ../README.md for the schema.
+#
+# player_hash is deliberately never asserted in expected_args: it's a salted hash the user's
+# own identity resolves to via session context, never something typed in plain language.
+
+- id: compute_stats_overall
+  category: single_tool
+  prompt: "What's my VPIP and PFR overall?"
+  expected_tool: compute_stats
+  expected_args: {}
+
+- id: compute_stats_by_position
+  category: single_tool
+  prompt: "Show my stats from the button."
+  expected_tool: compute_stats
+  expected_args:
+    position: BTN
+
+- id: compute_stats_date_range
+  category: argument_inference
+  prompt: "What are my stats for January 2026?"
+  expected_tool: compute_stats
+  expected_args:
+    start_date: "2026-01-01"
+    end_date: "2026-01-31"
+
+- id: compute_stats_aggression_factor
+  category: single_tool
+  prompt: "Give me my aggression factor."
+  expected_tool: compute_stats
+  expected_args: {}
+
+- id: compute_stats_population_baseline
+  category: argument_inference
+  prompt: "What's the average VPIP across the whole population?"
+  expected_tool: compute_stats
+  expected_args: {}
+  unexpected_args_absent: [player_hash]
+  notes: >
+    A population-wide report means player_hash must be omitted per the tool's own docstring
+    ("or the whole population if player_hash is omitted") — tests the model doesn't invent
+    a placeholder hash.
+
+- id: compute_stats_position_and_dates
+  category: argument_inference
+  prompt: "How do my stats look for hands from the small blind between March and April 2026?"
+  expected_tool: compute_stats
+  expected_args:
+    position: SB
+    start_date: "2026-03-01"
+    end_date: "2026-04-30"
+
+- id: compute_stats_vague_running
+  category: ambiguous
+  prompt: "How am I running lately?"
+  expected_tool: compute_stats
+  expected_args: {}
+  notes: Vague timeframe; only checks routing to compute_stats rather than find_leaks.
+
+- id: compute_stats_3bet_this_year
+  category: argument_inference
+  prompt: "What's my 3-bet percentage this year?"
+  expected_tool: compute_stats
+  expected_args:
+    start_date: "2026-01-01"

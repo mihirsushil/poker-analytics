@@ -1,0 +1,6 @@
+- id: fixture_b1
+  category: argument_inference
+  prompt: "Show my stats from last month."
+  expected_tool: compute_stats
+  expected_args: {}
+  notes: "loader should default expected_args/notes when omitted upstream"

@@ -1,0 +1,11 @@
+- id: fixture_a1
+  category: single_tool
+  prompt: "Show me hand 5."
+  expected_tool: get_hand
+  expected_args:
+    id: 5
+
+- id: fixture_a2
+  category: negative
+  prompt: "What's the weather?"
+  expected_tool: null

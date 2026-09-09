@@ -1,0 +1,61 @@
+# Scenarios for the `find_leaks` tool. See ../README.md for the schema.
+#
+# The last scenario is the key trap in this file: a plain "what is X" stat question should
+# route to compute_stats, not find_leaks, even though both tools report similar numbers.
+# find_leaks is for "is X a problem" framing specifically (deviation from baseline).
+
+- id: find_leaks_biggest
+  category: single_tool
+  prompt: "What are my biggest leaks?"
+  expected_tool: find_leaks
+  expected_args: {}
+
+- id: find_leaks_position_utg
+  category: single_tool
+  prompt: "Am I too loose from early position?"
+  expected_tool: find_leaks
+  expected_args:
+    position: UTG
+  notes: "\"Too loose\" is baseline-deviation framing, not a plain stat request."
+
+- id: find_leaks_deviation_generic
+  category: single_tool
+  prompt: "Where am I deviating most from a solid player?"
+  expected_tool: find_leaks
+  expected_args: {}
+
+- id: find_leaks_position_sb
+  category: single_tool
+  prompt: "Find weaknesses in my small blind play."
+  expected_tool: find_leaks
+  expected_args:
+    position: SB
+
+- id: find_leaks_vague_wrong
+  category: ambiguous
+  prompt: "What am I doing wrong at the table lately?"
+  expected_tool: find_leaks
+  expected_args: {}
+
+- id: find_leaks_3betting
+  category: single_tool
+  prompt: "Flag anything unusual about my 3-betting compared to a typical player."
+  expected_tool: find_leaks
+  expected_args: {}
+
+- id: find_leaks_date_range
+  category: argument_inference
+  prompt: "Check my leaks for hands from February 2026."
+  expected_tool: find_leaks
+  expected_args:
+    start_date: "2026-02-01"
+    end_date: "2026-02-28"
+
+- id: find_leaks_vs_compute_stats_trap
+  category: ambiguous
+  prompt: "What's my fold-to-3-bet percentage?"
+  expected_tool: compute_stats
+  expected_args: {}
+  notes: >
+    Trap: a plain "what is X" stat request is compute_stats, even though find_leaks reports
+    overlapping numbers. Only "is this a problem"-framed questions should route to find_leaks.

@@ -1,0 +1,54 @@
+# Negative scenarios: prompts with no legitimate reason to call any poker tool. These
+# measure false-positive tool-calling — a model that reaches for query_hands on "what's the
+# weather" is a real failure mode, not a harmless miss.
+
+- id: negative_weather
+  category: negative
+  prompt: "What's the weather like today?"
+  expected_tool: null
+  expected_args: {}
+
+- id: negative_book_recommendation
+  category: negative
+  prompt: "Can you recommend a good poker book?"
+  expected_tool: null
+  expected_args: {}
+
+- id: negative_meta_question
+  category: negative
+  prompt: "What is the mcp Python package and how do I install it?"
+  expected_tool: null
+  expected_args: {}
+
+- id: negative_closing_remark
+  category: negative
+  prompt: "Thanks, that's all for now!"
+  expected_tool: null
+  expected_args: {}
+
+- id: negative_rules_question
+  category: negative
+  prompt: "What's the rule for a split pot in Omaha?"
+  expected_tool: null
+  expected_args: {}
+
+- id: negative_strategy_advice
+  category: negative
+  prompt: "How do I bluff more effectively against nits?"
+  expected_tool: null
+  expected_args: {}
+  notes: >
+    General strategy advice doesn't require this player's data; a model that calls
+    find_leaks here is over-eager, not helpful.
+
+- id: negative_terminology
+  category: negative
+  prompt: "Explain what VPIP stands for."
+  expected_tool: null
+  expected_args: {}
+
+- id: negative_legality
+  category: negative
+  prompt: "Is online poker legal in my state?"
+  expected_tool: null
+  expected_args: {}

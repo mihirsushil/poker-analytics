@@ -1,0 +1,45 @@
+# Scenarios for the `compare_positions` tool. See ../README.md for the schema.
+
+- id: compare_positions_basic
+  category: single_tool
+  prompt: "Break my stats down by position."
+  expected_tool: compare_positions
+  expected_args: {}
+
+- id: compare_positions_two_named
+  category: single_tool
+  prompt: "How does my BTN play compare to my SB play?"
+  expected_tool: compare_positions
+  expected_args: {}
+  notes: >
+    compare_positions always returns every position's report in one call; naming two
+    positions in the prompt doesn't change the tool or its arguments.
+
+- id: compare_positions_date_range
+  category: argument_inference
+  prompt: "Show my positional stats for hands played in Q1 2026."
+  expected_tool: compare_positions
+  expected_args:
+    start_date: "2026-01-01"
+    end_date: "2026-03-31"
+
+- id: compare_positions_most_aggressive
+  category: single_tool
+  prompt: "Which position am I most aggressive from?"
+  expected_tool: compare_positions
+  expected_args: {}
+
+- id: compare_positions_side_by_side
+  category: single_tool
+  prompt: "Show me a side-by-side of my stats at every seat."
+  expected_tool: compare_positions
+  expected_args: {}
+
+- id: compare_positions_last_month
+  category: argument_inference
+  prompt: "Compare my position-by-position numbers for last month."
+  expected_tool: compare_positions
+  expected_args: {}
+  notes: >
+    "Last month" is relative to whenever the eval runs; only the tool choice is checked,
+    not a specific resolved date range.

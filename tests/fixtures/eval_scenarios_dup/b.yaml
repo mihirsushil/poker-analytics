@@ -1,0 +1,4 @@
+- id: dup_id
+  category: negative
+  prompt: "No, that's everything."
+  expected_tool: null

@@ -8,10 +8,16 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
     "mcp>=1.2.0",
+    "pyyaml>=6.0",
 ]
+
+[project.optional-dependencies]
+eval = ["anthropic>=0.40", "openai>=1.0"]
+dev = ["pytest>=8.0"]
 
 [project.scripts]
 poker-analytics-mcp = "poker_analytics.mcp_server:main"
+poker-analytics-eval = "poker_analytics.eval.run:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
