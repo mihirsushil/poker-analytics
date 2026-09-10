@@ -13,3 +13,9 @@ data/samples/phh/bulk/
 
 # Per-install salt for hashing opponent names - must never be committed
 data/.hash_salt
+
+# Phase 4 - regenerated from data/poker.db via extract.py + dataset.py;
+# adapter weights and benchmark output are run artifacts, not source.
+phase4/data/*.jsonl
+phase4/adapters/
+phase4/benchmark_results.json

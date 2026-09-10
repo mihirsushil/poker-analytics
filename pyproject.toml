@@ -13,11 +13,16 @@ dependencies = [
 
 [project.optional-dependencies]
 eval = ["anthropic>=0.40", "openai>=1.0"]
+phase4 = ["torch", "transformers", "peft", "accelerate", "datasets", "sentencepiece"]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
 poker-analytics-mcp = "poker_analytics.mcp_server:main"
 poker-analytics-eval = "poker_analytics.eval.run:main"
+poker-analytics-extract = "poker_analytics.phase4.extract:main"
+poker-analytics-dataset = "poker_analytics.phase4.dataset:main"
+poker-analytics-finetune = "poker_analytics.phase4.finetune:main"
+poker-analytics-benchmark = "poker_analytics.phase4.benchmark:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
