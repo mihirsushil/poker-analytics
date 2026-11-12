@@ -63,15 +63,33 @@ def load_examples(path: str | Path) -> list[DecisionExample]:
 def split(
     examples: list[DecisionExample], seed: int = 0, val_frac: float = 0.1, test_frac: float = 0.1
 ) -> tuple[list[DecisionExample], list[DecisionExample], list[DecisionExample]]:
+    """Group-split by `hand_pk` so decisions from the same hand never leak across splits."""
+    by_hand: dict[int, list[DecisionExample]] = {}
+    for ex in examples:
+        by_hand.setdefault(ex.hand_pk, []).append(ex)
+
+    hand_ids = list(by_hand.keys())
     rng = random.Random(seed)
-    shuffled = examples[:]
-    rng.shuffle(shuffled)
-    n = len(shuffled)
-    n_val = int(n * val_frac)
-    n_test = int(n * test_frac)
-    val = shuffled[:n_val]
-    test = shuffled[n_val : n_val + n_test]
-    train = shuffled[n_val + n_test :]
+    rng.shuffle(hand_ids)
+
+    n_hands = len(hand_ids)
+    n_val = int(n_hands * val_frac)
+    n_test = int(n_hands * test_frac)
+
+    val_hands = set(hand_ids[:n_val])
+    test_hands = set(hand_ids[n_val : n_val + n_test])
+
+    train: list[DecisionExample] = []
+    val: list[DecisionExample] = []
+    test: list[DecisionExample] = []
+    for hid in hand_ids:
+        group = by_hand[hid]
+        if hid in val_hands:
+            val.extend(group)
+        elif hid in test_hands:
+            test.extend(group)
+        else:
+            train.extend(group)
     return train, val, test
 
 

@@ -26,7 +26,8 @@ poker.db --extract.py--> decisions.jsonl --dataset.py--> train/val/test.jsonl
   matches the real action sequence — same spirit as Phase 1's
   money-conservation checks.
 - **`dataset.py`** — deterministic (seeded) train/val/test split (80/10/10)
-  with no overlap, formatted as chat-template instruction/response JSONL
+  **grouped by `hand_pk`** so multiple decisions from the same hand never leak
+  across partitions, formatted as chat-template instruction/response JSONL
   (system prompt + state description + target action string).
 - **`finetune.py`** — LoRA (`peft`) fine-tune of a `transformers` causal-LM.
   **Verified end-to-end on this machine**: `--smoke` mode (Qwen2.5-0.5B-Instruct,

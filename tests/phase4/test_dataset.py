@@ -58,3 +58,26 @@ def test_split_has_no_overlap_and_covers_everything():
     assert train_ids | val_ids | test_ids == {e.hand_pk for e in examples}
     assert len(val_ids) == 10
     assert len(test_ids) == 20
+
+
+def test_split_groups_by_hand_pk_when_multiple_decisions_per_hand():
+    # 50 hands, each with 4 decisions (preflop, flop, turn, river) = 200 examples.
+    # No hand_pk may appear in more than one split partition.
+    examples = [
+        _example(hand_pk=hand_id, street=street)
+        for hand_id in range(50)
+        for street in ("preflop", "flop", "turn", "river")
+    ]
+    train, val, test = split(examples, seed=7, val_frac=0.1, test_frac=0.2)
+
+    train_hands = {e.hand_pk for e in train}
+    val_hands = {e.hand_pk for e in val}
+    test_hands = {e.hand_pk for e in test}
+
+    assert not (train_hands & val_hands)
+    assert not (train_hands & test_hands)
+    assert not (val_hands & test_hands)
+    assert len(val_hands) == 5
+    assert len(test_hands) == 10
+    assert len(train_hands) == 35
+    assert len(train) + len(val) + len(test) == 200

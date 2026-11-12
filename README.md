@@ -64,7 +64,34 @@ Run it: `python -m poker_analytics.mcp_server` (or the `poker-analytics-mcp`
 console script after `pip install -e .`), registered with an MCP client
 over stdio.
 
-Next: Phase 3 (eval harness).
+Phase 3 (MCP tool-selection evaluation harness) lives in
+`src/poker_analytics/eval/` (`poker-analytics-eval`): 30 declarative YAML
+scenarios in `eval/scenarios.yaml` (single-tool, multi-step, and no-tool/guardrail
+cases) with deterministic argument-shape grading in `eval/grading.py` and cost/latency
+accounting in `eval/report.py`. Also serves as the benchmark target for
+[`mcp-eval-toolkit`](https://github.com/mihirsushil/mcp-eval-toolkit).
+
+Phase 4 (decision-point extraction, group-safe dataset split, and LoRA fine-tuning
+pipeline) lives in `src/poker_analytics/phase4/` (see [`phase4/README.md`](phase4/README.md)
+for details):
+
+- `poker-analytics-extract` walks `hands`/`hand_seats`/`actions`/`pots` to emit
+  supervised `(state, action)` decision points for seats with known hole cards.
+- `poker-analytics-dataset` splits decision points into `train`/`val`/`test`
+  **grouped by `hand_pk`** so multiple streets from the same hand never leak across
+  partitions, and formats chat-template JSONL.
+- `poker-analytics-finetune` and `poker-analytics-benchmark` run Qwen2.5 LoRA
+  fine-tuning (`peft`) and compare against a `MajorityClassBaseline` and an optional
+  prompted frontier model.
+
+## Reproducible setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev,eval,phase4]"
+pytest -v
+```
 
 ## Phases
 
