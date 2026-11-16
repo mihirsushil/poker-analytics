@@ -29,31 +29,32 @@ poker.db --extract.py--> decisions.jsonl --dataset.py--> train/val/test.jsonl
   **grouped by `hand_pk`** so multiple decisions from the same hand never leak
   across partitions, formatted as chat-template instruction/response JSONL
   (system prompt + state description + target action string).
-- **`finetune.py`** — LoRA (`peft`) fine-tune of a `transformers` causal-LM.
-  **Verified end-to-end on this machine**: `--smoke` mode (Qwen2.5-0.5B-Instruct,
-  16 examples, 1 epoch, MPS backend) loads the base model, applies LoRA
-  adapters (`q_proj`/`v_proj`, r=8), trains, evaluates, and saves the adapter
-  — takes well under a minute. This is a **mechanical** smoke test, not a
-  claim the model learned good poker strategy from 16 examples.
-- **`infer.py`** — reloads a saved adapter and generates a prediction.
-  Verified: after the smoke run above, generated outputs are real
-  action-shaped text (`"fold"`, `"bet 5000."`, `"raise to 6359"` — some
-  correct, most not, exactly as expected from a 16-example/1-epoch run).
-- **`baseline.py`** — majority-class baseline. On the real data, `check` is
-  the majority class in the train split (see "known bias" below).
-- **`benchmark.py`** — scores baseline vs. LoRA adapter vs. frontier model on
-  the held-out test split, graded on the *action bucket*
-  (fold/check/call/bet/raise), not exact sizing. Verified end-to-end: on a
-  20-example test slice, the smoke-trained adapter (25% accuracy) does
-  *not* beat the majority-class baseline (35%) — expected and reported
-  honestly, since 16 examples/1 epoch isn't a real training run.
+- **`finetune.py`** — LoRA (`peft`) fine-tune of a `transformers` causal-LM with
+  **assistant-only loss masking** (system + user prompt tokens masked with `-100`
+  so gradient updates optimize only the assistant's action tokens) and `r=16,
+  lora_alpha=32` across `q_proj`, `k_proj`, `v_proj`, and `o_proj`.
+  - **Real training run completed (`phase4/adapters/qwen25_05b_lora`)**:
+    `Qwen/Qwen2.5-0.5B-Instruct` trained on `n_train = 2,000` decision points
+    for `2.0` epochs (`batch_size = 8`, `lr = 2e-4`), reaching
+    `final_train_loss = 0.3340` and `final_eval_loss = 0.2746` on `n_val = 250`.
+- **`infer.py`** — reloads a saved adapter (or evaluates the unadapted zero-shot
+  base model via `predict_zeroshot_batch`) and generates greedy (`do_sample=False`)
+  action predictions.
+- **`baseline.py`** — majority-class baseline. On the group-safe `hand_pk` split
+  (`train = 6,011`, `val = 714`, `test = 717`), `check` is the majority class.
+- **`benchmark.py`** — scores `majority_class_baseline` vs. `zeroshot_base` vs.
+  `lora_finetune` (and optional `frontier_model`) on the held-out `hand_pk` test
+  split (`n = 250`), graded on the action bucket (`fold`/`check`/`call`/`bet`/`raise`):
+  - `majority_class_baseline` (`check`): **28.0%** (`70 / 250`)
+  - `zeroshot_base` (`Qwen/Qwen2.5-0.5B-Instruct`): **18.4%** (`46 / 250`)
+  - `lora_finetune` (`phase4/adapters/qwen25_05b_lora`): **61.6%** (`154 / 250`,
+    **+33.6 pp** over majority-class and **+43.2 pp** over zero-shot base; see
+    [`results/benchmark_report.md`](results/benchmark_report.md)).
 - **`frontier.py`** — prompted-frontier-model comparison arm, gated on
   `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` being set. **No live API call was
   made building this** — the key isn't set in this environment.
   `benchmark.py` skips this arm automatically when unconfigured.
-- 13 new unit tests (`tests/phase4/`), all passing, no live model or API
-  calls in any of them (`test_extract.py`, `test_dataset.py`,
-  `test_baseline.py`, `test_benchmark.py`). Full suite: 100/100 passing.
+- 14 unit tests (`tests/phase4/`), all passing, including `test_split_groups_by_hand_pk_without_cross_split_leakage` verifying zero `hand_pk` overlap across `train`/`val`/`test`. Full repo suite: 101/101 passing.
 
 ## Known bias in the data (real, not a bug)
 

@@ -26,25 +26,42 @@ def load_chat_jsonl(path: str | Path) -> list[dict]:
     return rows
 
 
-def build_dataset(rows: list[dict], tokenizer, max_length: int = 512):
+def build_dataset(rows: list[dict], tokenizer, max_length: int = 256):
     from datasets import Dataset
 
-    def _to_text(row):
-        return tokenizer.apply_chat_template(row["messages"], tokenize=False, add_generation_prompt=False)
+    input_ids_list = []
+    attention_mask_list = []
+    labels_list = []
+    pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id
 
-    texts = [_to_text(r) for r in rows]
-    ds = Dataset.from_dict({"text": texts})
-
-    def _tokenize(batch):
-        out = tokenizer(batch["text"], truncation=True, max_length=max_length, padding="max_length")
-        # Mask pad positions so the loss isn't dominated by padding tokens.
-        out["labels"] = [
-            [tok if tok != tokenizer.pad_token_id else -100 for tok in ids]
-            for ids in out["input_ids"]
+    for row in rows:
+        prompt_text = tokenizer.apply_chat_template(
+            row["messages"][:-1], tokenize=False, add_generation_prompt=True
+        )
+        full_text = tokenizer.apply_chat_template(
+            row["messages"], tokenize=False, add_generation_prompt=False
+        )
+        prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
+        full_ids = tokenizer(full_text, add_special_tokens=False, truncation=True, max_length=max_length)[
+            "input_ids"
         ]
-        return out
 
-    return ds.map(_tokenize, batched=True, remove_columns=["text"])
+        prompt_len = min(len(prompt_ids), len(full_ids))
+        # Mask system+user prompt tokens (-100) so loss optimizes only the assistant's action tokens.
+        labels = [-100] * prompt_len + full_ids[prompt_len:]
+        pad_count = max(0, max_length - len(full_ids))
+
+        input_ids_list.append(full_ids + [pad_id] * pad_count)
+        attention_mask_list.append([1] * len(full_ids) + [0] * pad_count)
+        labels_list.append(labels + [-100] * pad_count)
+
+    return Dataset.from_dict(
+        {
+            "input_ids": input_ids_list,
+            "attention_mask": attention_mask_list,
+            "labels": labels_list,
+        }
+    )
 
 
 def main() -> None:
@@ -82,10 +99,10 @@ def main() -> None:
     model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float32)
 
     lora_config = LoraConfig(
-        r=8,
-        lora_alpha=16,
+        r=16,
+        lora_alpha=32,
         lora_dropout=0.05,
-        target_modules=["q_proj", "v_proj"],
+        target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
         task_type="CAUSAL_LM",
     )
     model = get_peft_model(model, lora_config)

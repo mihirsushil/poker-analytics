@@ -81,8 +81,12 @@ for details):
   **grouped by `hand_pk`** so multiple streets from the same hand never leak across
   partitions, and formats chat-template JSONL.
 - `poker-analytics-finetune` and `poker-analytics-benchmark` run Qwen2.5 LoRA
-  fine-tuning (`peft`) and compare against a `MajorityClassBaseline` and an optional
-  prompted frontier model.
+  fine-tuning (`peft`, rank `r=16, alpha=32` across `q_proj/k_proj/v_proj/o_proj`
+  with assistant-only `-100` prompt loss masking) and compare against both
+  `majority_class_baseline` and `zeroshot_base` (`Qwen/Qwen2.5-0.5B-Instruct`):
+  - **Majority-class baseline (`check`):** `28.0%` (`70 / 250`)
+  - **Zero-shot `Qwen2.5-0.5B-Instruct`:** `18.4%` (`46 / 250`)
+  - **LoRA fine-tuned `Qwen2.5-0.5B-Instruct`:** **`61.6%`** (`154 / 250`, **+33.6 pp** over majority-class baseline, **+43.2 pp** over zero-shot base) on the leak-free `hand_pk` test split (see [`phase4/results/benchmark_report.md`](phase4/results/benchmark_report.md)).
 
 ## Reproducible setup
 

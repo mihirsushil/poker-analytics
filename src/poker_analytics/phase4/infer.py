@@ -30,6 +30,41 @@ def _load(adapter_dir: str):
     return model, tokenizer, device
 
 
+@lru_cache(maxsize=2)
+def _load_base(base_model_id: str):
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(base_model_id)
+    base = AutoModelForCausalLM.from_pretrained(base_model_id, torch_dtype=torch.float32)
+    device = "mps" if torch.backends.mps.is_available() else ("cuda" if torch.cuda.is_available() else "cpu")
+    base.to(device)
+    base.eval()
+    return base, tokenizer, device
+
+
+def predict_action_base(ex: DecisionExample, base_model_id: str, max_new_tokens: int = 12) -> str:
+    import torch
+
+    model, tokenizer, device = _load_base(base_model_id)
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": format_prompt(ex)},
+    ]
+    prompt_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    inputs = tokenizer(prompt_text, return_tensors="pt").to(device)
+
+    with torch.no_grad():
+        out = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+        )
+    generated = out[0][inputs["input_ids"].shape[1] :]
+    return tokenizer.decode(generated, skip_special_tokens=True).strip()
+
+
 def predict_action(ex: DecisionExample, adapter_dir: str, max_new_tokens: int = 12) -> str:
     import torch
 

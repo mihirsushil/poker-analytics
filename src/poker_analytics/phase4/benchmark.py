@@ -70,7 +70,19 @@ def run_benchmark(
     results.append(score_arm("majority_class_baseline", test, baseline.predict))
 
     if adapter_dir and Path(adapter_dir).exists():
-        from .infer import predict_action
+        from .infer import predict_action, predict_action_base
+
+        meta_path = Path(adapter_dir) / "run_meta.json"
+        if meta_path.exists():
+            base_model_id = json.loads(meta_path.read_text()).get("base_model")
+            if base_model_id:
+                results.append(
+                    score_arm(
+                        f"zeroshot_base ({base_model_id})",
+                        test,
+                        lambda ex: predict_action_base(ex, base_model_id),
+                    )
+                )
 
         results.append(
             score_arm(
